@@ -50,6 +50,7 @@ con = consumer()
 con.start()
 message=""
 sen = sender()
+print "starting session, type /quit to end"
 while True:
     message = raw_input()
     if message == "/quit":
