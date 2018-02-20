@@ -18,6 +18,6 @@ Then start a second client, in a second term
 
 Type "Hello" in one of the client terminal: the message is broadcasted to all the clients
 
-### Limitation 
+### Limitations 
 
 A lot of :). To discuss later.
