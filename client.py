@@ -1,62 +1,50 @@
 #!/usr/bin/env python
-import pika
-import time
+# coding: utf-8
+
+import os
 import sys
-import uuid
+import socket
+import time
 from threading import Thread
 
-client_uid = str(uuid.uuid4())
-offset=len(client_uid)
+hote = "localhost"
+port = 11110
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect((hote, port))
+sock.settimeout(1)
 
-class consumer(Thread):
-    def run(self):
-	credentials = pika.PlainCredentials('guest', 'guest')
-	self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost', '5672', '/', credentials))
-	channel = self.connection.channel()
-	channel.exchange_declare(exchange='logs',
-		                 exchange_type='fanout')
-
-	result = channel.queue_declare(exclusive=True)
-	queue_name = result.method.queue
-	channel.queue_bind(exchange='logs',
-		           queue=queue_name)
-
-	def callback(ch, method, properties, body):
-	    if client_uid not in body:
-	        print("%s" % body[offset:])
-
-	channel.basic_consume(callback,
-		              queue=queue_name,
-		              no_ack=True)
-	channel.start_consuming()
-
-    def close(self):
-	self.connection.close()
-
-class sender(object):
+class Receiver(Thread):
 
     def __init__(self):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange='logs',
-                         exchange_type='fanout')
-    def send(self, message):
-        self.channel.basic_publish(exchange='logs',
-                      routing_key='',
-                      body=message)
-    
+        Thread.__init__(self)
+        self.must_stop = False
 
-con = consumer()
-con.start()
-message=""
-sen = sender()
-print "starting session, type /quit to end"
-while True:
-    message = raw_input()
-    if message == "/quit":
-        break
-    sen.send(client_uid+message)
+    def run(self):
+        while True:
+            if self.must_stop:
+                break
+            try:
+                response = sock.recv(2048)
+                print response
+            except socket.timeout, e:
+                err = e.args[0]
+                if err == 'timed out':
+                    time.sleep(1)
+                    
+    def stop(self):
+        self.must_stop = True
 
-print "ending session ..."
-con.close()
-
+recv = Receiver()
+recv.start()
+print "/quit to end session"
+try:
+    while True:
+        text = raw_input()
+        if text=="/quit":
+            print "ending ..."
+            recv.stop()
+            sys.exit()
+        sock.send(text)
+except KeyboardInterrupt:
+        recv.stop()
+        sys.exit()

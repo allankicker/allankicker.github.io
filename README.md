@@ -1,31 +1,23 @@
 Light chat app 
 
-### Installation (python2.7 and pip required)
-
-sudo apt-get install rabbitmq-server virtualenv
-
-sudo service rabbitmq-server start
-
-virtualenv lightchat
-
-. lightchat/bin/activate
-
-pip install pika
-
 ### Start app
 
-Start a first client, inside source dir: 
+Start server that will listen on localhost:11110
 
 ```
-. lightchat/bin/activate
+python server.py
+``` 
+
+Start a client that will connect to localhost:11110
+
+```
 python client.py
 ``` 
 
-Start a second client in a second terminal, the same way.
+Then start a second client, in a second term
 
-Now the 2 clients are connected and each one receive messages from the other one.
+Type "Hello" in one of the client terminal: the message is broadcasted to all the clients
 
 ### Limitation 
 
-Disconnected clients will not receive messages sent while they were offline
-All clients are connected to the same channel
+A lot of :). To discuss later.
