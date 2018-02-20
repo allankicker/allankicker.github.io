@@ -2,7 +2,7 @@ Light chat app
 
 ### Start app
 
-Start server that will listen on localhost:11110
+Start the server that will listen on localhost:11110
 
 ```
 python server.py
