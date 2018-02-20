@@ -3,7 +3,9 @@ Light chat app
 ### Installation (python2.7 and pip required)
 
 sudo apt-get install rabbitmq-server virtualenv
+
 sudo service rabbitmq-server start
+
 virtualenv lightchat
 
 pip install pika
