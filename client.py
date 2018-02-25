@@ -8,7 +8,7 @@ import time
 from threading import Thread
 
 hote = "localhost"
-port = 11110
+port = 11111
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((hote, port))
 sock.settimeout(1)
