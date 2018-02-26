@@ -3,10 +3,31 @@
 
 import socket
 import sys
-from threading import Thread
+import time
+from threading import Thread, Timer
+from contextlib import contextmanager
 
 
 client_sockets=[]
+
+# --- server stats
+max_threads = 0
+current_threads = 0
+@contextmanager
+def log_thread_stats():
+    global current_threads
+    global max_threads
+    current_threads+=1
+    max_threads = max(max_threads, current_threads)
+    yield
+    current_threads-=1
+
+def print_thread_stats():
+    print "--- thread stats"
+    print "%s active threads" % current_threads
+    print "%s max threads" % max_threads
+    print "%s sockets opened" % len(client_sockets)
+    print "----------------"
 
 class ClientSock(object):
 
@@ -37,15 +58,14 @@ class Broadcast(Thread):
         self.socket = socket
 
     def run(self):
-        print "runing broadcast"
-        try:
-            self.socket.in_use = True
-            self.socket.socket.send(self.message)
-            print "broadcasted " + self.message + " to client"
-            self.socket.in_use = False
-        except Exception as e:
-            print "## exception while broadcasting to client sock : " + str(e)
-            client_sockets.remove(self.socket)
+        with log_thread_stats():
+            try:
+                self.socket.in_use = True
+                self.socket.socket.send(self.message)
+                self.socket.in_use = False
+            except Exception as e:
+                print "## exception while broadcasting to client sock : " + str(e)
+                client_sockets.remove(self.socket)
 
 
 class Client(Thread):
@@ -55,21 +75,20 @@ class Client(Thread):
         self.sock=socket_wrapped.socket
     
     def run(self):
-        while True:
-            try:
-                print "## starting sock.recv"
-                message = self.sock.recv(2048)
-                print "## recv ended, message : " + message
-                if message=="":
+        with log_thread_stats():
+            while True:
+                try:
+                    message = self.sock.recv(2048)
+                    if message=="":
+                        break
+                    broadcast(message)
+                except Exception as e:
+                    print "Exception while listening on sock : " + str(e)
                     break
-                broadcast(message)
-            except Exception as e:
-                print "Exception while listening on sock : " + str(e)
-                break
             
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-tcpsock.bind(("",11111))
+tcpsock.bind(("",11112))
 
 try:
     while True:
@@ -80,6 +99,9 @@ try:
         client_sockets.append(cl_sock_wrapped)
         cl = Client(cl_sock_wrapped)
         cl.start()
+        print_thread_stats()
+
 except KeyboardInterrupt:
+        print "exiting ..." 
         sys.exit()
 
